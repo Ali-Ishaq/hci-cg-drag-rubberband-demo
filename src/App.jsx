@@ -1,6 +1,5 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import "./App.css";
-import { useIsMobileDevice } from "./hooks/useIsMobileDevice";
 
 const INITIAL_ITEMS = [
   { id: 1, x: 80, y: 80, label: "Box A" },
@@ -12,9 +11,15 @@ const BOX_WIDTH = 90;
 const BOX_HEIGHT = 60;
 
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+const createShapeId = () => {
+  if (typeof globalThis.crypto?.randomUUID === "function") {
+    return globalThis.crypto.randomUUID();
+  }
+
+  return `shape-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+};
 
 export default function App() {
-  const isMobile = useIsMobileDevice();
   const [items, setItems] = useState(INITIAL_ITEMS);
   const [demoMode, setDemoMode] = useState("drag");
   const [bandShape, setBandShape] = useState("rectangle");
@@ -24,10 +29,11 @@ export default function App() {
   const dragRef = useRef(null);
   const canvasRef = useRef(null);
 
-  // Mouse position relative to the canvas
-  const getPos = (e) => {
-    const rect = canvasRef.current.getBoundingClientRect();
-    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+  // Pointer position relative to the canvas
+  const getPos = (event) => {
+    const rect = canvasRef.current?.getBoundingClientRect();
+    if (!rect) return { x: 0, y: 0 };
+    return { x: event.clientX - rect.left, y: event.clientY - rect.top };
   };
 
   const getCanvasSize = () => ({
@@ -35,26 +41,70 @@ export default function App() {
     height: canvasRef.current?.clientHeight ?? 0,
   });
 
+  useEffect(() => {
+    if (!canvasRef.current || typeof ResizeObserver === "undefined") return;
+
+    const clampItemsToBounds = () => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+
+      const maxX = Math.max(0, canvas.clientWidth - BOX_WIDTH);
+      const maxY = Math.max(0, canvas.clientHeight - BOX_HEIGHT);
+
+      setItems((prev) =>
+        prev.map((item) => ({
+          ...item,
+          x: clamp(item.x, 0, maxX),
+          y: clamp(item.y, 0, maxY),
+        })),
+      );
+    };
+
+    clampItemsToBounds();
+
+    const observer = new ResizeObserver(clampItemsToBounds);
+    observer.observe(canvasRef.current);
+
+    return () => observer.disconnect();
+  }, []);
+
+  const capturePointer = (pointerId) => {
+    const canvas = canvasRef.current;
+    if (!canvas?.setPointerCapture) return;
+    canvas.setPointerCapture(pointerId);
+  };
+
+  const releasePointer = (pointerId) => {
+    const canvas = canvasRef.current;
+    if (!canvas?.releasePointerCapture || !canvas?.hasPointerCapture) return;
+    if (canvas.hasPointerCapture(pointerId)) {
+      canvas.releasePointerCapture(pointerId);
+    }
+  };
+
   // In rubber mode, pressing on empty canvas starts drawing a band
-  const handleCanvasDown = (e) => {
+  const handleCanvasPointerDown = (event) => {
     if (demoMode !== "rubber") return;
-    if (e.target !== canvasRef.current) return;
-    e.preventDefault();
-    const pos = getPos(e);
-    dragRef.current = { mode: "band", origin: pos };
+    if (event.target !== canvasRef.current) return;
+    event.preventDefault();
+    capturePointer(event.pointerId);
+    const pos = getPos(event);
+    dragRef.current = { mode: "band", pointerId: event.pointerId, origin: pos };
     setBand({ x0: pos.x, y0: pos.y, x1: pos.x, y1: pos.y });
     setSelected(new Set());
   };
 
   // In drag mode, pressing a box starts dragging that box
-  const handleItemDown = (e, id) => {
-    e.stopPropagation();
-    e.preventDefault();
-    const pos = getPos(e);
+  const handleItemPointerDown = (event, id) => {
+    event.stopPropagation();
+    event.preventDefault();
+    capturePointer(event.pointerId);
+    const pos = getPos(event);
     const ids = new Set([id]);
     setSelected(ids);
     dragRef.current = {
       mode: "drag",
+      pointerId: event.pointerId,
       ids,
       origin: pos,
       // Snapshot starting position to avoid movement drift
@@ -85,10 +135,12 @@ export default function App() {
     setDrawnShapes((prev) => prev.filter((s) => s.id !== id));
   const clearShapes = () => setDrawnShapes([]);
 
-  const handleMouseMove = (e) => {
+  const handlePointerMove = (event) => {
     if (!dragRef.current) return;
-    const rawPos = getPos(e);
     const d = dragRef.current;
+    if (d.pointerId !== event.pointerId) return;
+
+    const rawPos = getPos(event);
     const { width: canvasWidth, height: canvasHeight } = getCanvasSize();
     const pos = {
       x: clamp(rawPos.x, 0, canvasWidth),
@@ -140,8 +192,11 @@ export default function App() {
     }
   };
 
-  const handleMouseUp = () => {
+  const handlePointerUp = (event) => {
     if (!dragRef.current) return;
+    if (dragRef.current.pointerId !== event.pointerId) return;
+
+    releasePointer(event.pointerId);
 
     if (dragRef.current.mode === "band" && band) {
       const { width: canvasWidth, height: canvasHeight } = getCanvasSize();
@@ -154,7 +209,7 @@ export default function App() {
         setDrawnShapes((prev) => [
           ...prev,
           {
-            id: crypto.randomUUID(),
+            id: createShapeId(),
             shape: bandShape,
             left: minX,
             top: minY,
@@ -177,17 +232,6 @@ export default function App() {
     width: Math.abs(band.x1 - band.x0),
     height: Math.abs(band.y1 - band.y0),
   };
-
-  if (isMobile) {
-    return (
-      <div className="device-block-screen">
-        <div className="device-block-card">
-          <h1>Desktop Access Only</h1>
-          <p>This demo is available on desktop/laptop screens only.</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="app">
@@ -216,8 +260,8 @@ export default function App() {
 
       <p className="mode-description">
         {demoMode === "drag"
-          ? "Dragging mode: click and drag a box to move it."
-          : `Rubberbanding mode: draw a ${bandShape} and release to create it.`}
+          ? "Dragging mode: drag a box with mouse or touch to move it."
+          : `Rubberbanding mode: draw a ${bandShape} with mouse or touch, then release.`}
       </p>
 
       {demoMode === "rubber" && (
@@ -242,10 +286,10 @@ export default function App() {
       <div
         ref={canvasRef}
         className={`canvas ${demoMode === "drag" ? "mode-drag" : "mode-rubber"}`}
-        onMouseDown={handleCanvasDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
+        onPointerDown={handleCanvasPointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
       >
         {demoMode === "drag" &&
           items.map((item) => (
@@ -253,7 +297,7 @@ export default function App() {
               key={item.id}
               className={`box${selected.has(item.id) ? " selected" : ""}`}
               style={{ left: item.x, top: item.y }}
-              onMouseDown={(e) => handleItemDown(e, item.id)}
+              onPointerDown={(event) => handleItemPointerDown(event, item.id)}
             >
               {item.label}
             </div>
@@ -286,10 +330,10 @@ export default function App() {
       <div className="status-row">
         <p className="status">
           {demoMode === "drag"
-            ? "Dragging active: move boxes inside the canvas."
+            ? "Dragging active: move boxes inside the canvas with mouse or touch."
             : drawnShapes.length === 0
-              ? "Rubberbanding active: draw a shape on the canvas."
-              : `Rubberbanding active: ${drawnShapes.length} shape${drawnShapes.length === 1 ? "" : "s"} — click one to remove.`}
+              ? "Rubberbanding active: draw a shape on the canvas with mouse or touch."
+              : `Rubberbanding active: ${drawnShapes.length} shape${drawnShapes.length === 1 ? "" : "s"} — tap or click one to remove.`}
         </p>
         {demoMode === "rubber" && drawnShapes.length > 0 && (
           <button type="button" className="clear-btn" onClick={clearShapes}>

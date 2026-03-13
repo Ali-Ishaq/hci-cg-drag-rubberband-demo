@@ -16,33 +16,6 @@ body {
   min-height: 100vh;
 }
 
-.device-block-screen {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
-}
-
-.device-block-card {
-  width: 100%;
-  max-width: 420px;
-  background: #ffffff;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  padding: 18px;
-  text-align: center;
-}
-
-.device-block-card h1 {
-  font-size: 1.1rem;
-  margin-bottom: 8px;
-}
-
-.device-block-card p {
-  font-size: 0.95rem;
-}
-
 .app {
   max-width: 760px;
   margin: 0 auto;
@@ -56,6 +29,7 @@ h1 {
 
 .mode-switcher {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 10px;
 }
@@ -82,6 +56,7 @@ h1 {
 
 .shape-switcher {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 10px;
 }
@@ -103,13 +78,15 @@ h1 {
 
 .canvas {
   position: relative;
-  width: 700px;
+  width: 100%;
+  max-width: 700px;
   height: 520px;
   background: #ffffff;
   border: 1px solid #9ca3af;
   overflow: hidden;
   margin-bottom: 10px;
   user-select: none;
+  touch-action: none;
 }
 
 .canvas.mode-drag {
@@ -135,6 +112,7 @@ h1 {
   border: 1px solid #6b7280;
   background: #e5e7eb;
   pointer-events: all;
+  touch-action: none;
 }
 
 .box:active,
@@ -200,4 +178,20 @@ h1 {
 .clear-btn:hover {
   border-color: #dc2626;
   color: #dc2626;
+}
+
+@media (max-width: 820px) {
+  .app {
+    padding: 16px 12px;
+  }
+
+  .canvas {
+    height: min(62vh, 420px);
+  }
+
+  .status-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
 }
