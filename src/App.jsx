@@ -1,5 +1,6 @@
-import { useState, useRef } from "react";
+import { useRef, useState } from "react";
 import "./App.css";
+import { useIsMobileDevice } from "./hooks/useIsMobileDevice";
 
 const INITIAL_ITEMS = [
   { id: 1, x: 80, y: 80, label: "Box A" },
@@ -13,6 +14,7 @@ const BOX_HEIGHT = 60;
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 
 export default function App() {
+  const isMobile = useIsMobileDevice();
   const [items, setItems] = useState(INITIAL_ITEMS);
   const [demoMode, setDemoMode] = useState("drag");
   const [bandShape, setBandShape] = useState("rectangle");
@@ -175,6 +177,17 @@ export default function App() {
     width: Math.abs(band.x1 - band.x0),
     height: Math.abs(band.y1 - band.y0),
   };
+
+  if (isMobile) {
+    return (
+      <div className="device-block-screen">
+        <div className="device-block-card">
+          <h1>Desktop Access Only</h1>
+          <p>This demo is available on desktop/laptop screens only.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="app">

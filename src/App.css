@@ -16,6 +16,33 @@ body {
   min-height: 100vh;
 }
 
+.device-block-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.device-block-card {
+  width: 100%;
+  max-width: 420px;
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 18px;
+  text-align: center;
+}
+
+.device-block-card h1 {
+  font-size: 1.1rem;
+  margin-bottom: 8px;
+}
+
+.device-block-card p {
+  font-size: 0.95rem;
+}
+
 .app {
   max-width: 760px;
   margin: 0 auto;
