@@ -1,0 +1,176 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family:
+    system-ui,
+    -apple-system,
+    Segoe UI,
+    Roboto,
+    sans-serif;
+  background: #f6f7f9;
+  color: #1f2937;
+  min-height: 100vh;
+}
+
+.app {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 20px 16px;
+}
+
+h1 {
+  font-size: 1.25rem;
+  margin-bottom: 8px;
+}
+
+.mode-switcher {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.mode-btn {
+  border: 1px solid #9ca3af;
+  background: #ffffff;
+  color: #111827;
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.mode-btn.active {
+  border-color: #1d4ed8;
+  background: #dbeafe;
+}
+
+.mode-description {
+  font-size: 0.9rem;
+  margin-bottom: 12px;
+}
+
+.shape-switcher {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.shape-btn {
+  border: 1px solid #9ca3af;
+  background: #ffffff;
+  color: #111827;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.shape-btn.active {
+  border-color: #1d4ed8;
+  background: #dbeafe;
+}
+
+.canvas {
+  position: relative;
+  width: 700px;
+  height: 520px;
+  background: #ffffff;
+  border: 1px solid #9ca3af;
+  overflow: hidden;
+  margin-bottom: 10px;
+  user-select: none;
+}
+
+.canvas.mode-drag {
+  cursor: default;
+}
+
+.canvas.mode-rubber {
+  cursor: crosshair;
+}
+
+.box {
+  position: absolute;
+  width: 90px;
+  height: 60px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #111827;
+  cursor: grab;
+  border: 1px solid #6b7280;
+  background: #e5e7eb;
+  pointer-events: all;
+}
+
+.box:active,
+.box.selected:active {
+  cursor: grabbing;
+}
+
+.box.selected {
+  border-color: #1d4ed8;
+  background: #dbeafe;
+  z-index: 2;
+}
+
+.drawn-shape {
+  position: absolute;
+  border: 1px solid #1d4ed8;
+  background: rgba(37, 99, 235, 0.1);
+  cursor: pointer;
+}
+
+.drawn-shape:hover {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: #dc2626;
+}
+
+.drawn-shape.circle {
+  border-radius: 999px;
+}
+
+.rubber-band {
+  position: absolute;
+  border: 1px dashed #1d4ed8;
+  background: rgba(37, 99, 235, 0.12);
+  pointer-events: none;
+}
+
+.rubber-band.circle {
+  border-radius: 999px;
+}
+
+.status-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 1.2em;
+}
+
+.status {
+  font-size: 0.9rem;
+  color: #374151;
+}
+
+.clear-btn {
+  border: 1px solid #9ca3af;
+  background: #ffffff;
+  color: #374151;
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.clear-btn:hover {
+  border-color: #dc2626;
+  color: #dc2626;
+}
